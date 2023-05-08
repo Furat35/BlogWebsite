@@ -1,0 +1,205 @@
+﻿@using BlogWebSite.Entity.Models.DTOs.ArticleComment;
+@using BlogWebSite.Entity.Models.DTOs.Articles;
+@using BlogWebSite.Entity.Models.DTOs.ArticleComment;
+@model ArticleDto
+
+@{
+    ViewData["Title"] = "Ana Sayfa";
+}
+
+<section class="blog-posts">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="all-blog-posts">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="blog-post">
+                                <div class="blog-thumb">
+                                    <img src="@Model.Image.FileName" height="250px" alt="" asp-append-version="true">
+                                </div>
+                                <div class="down-content">
+                                    <span>@Model.Category.Name</span>
+                                    <h4>@Model.Title</h4>
+                                    <ul class="post-info">
+                                        <li>@Model.CreatedBy</li>
+                                        <li>@Model.CreatedDate</li>
+                                    </ul>
+                                    <p style="min-height: 80px;">
+                                        @Model.Content
+                                    </p>
+                                    <div class="post-options">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <ul class="post-tags">
+                                                    <li><i class="fa fa-tags"></i></li>
+                                                    <li>@Model.Category.Name</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            @{
+                                List<ArticleCommentDto> comments = (List<ArticleCommentDto>)ViewData["comments"];
+                                int count = comments.Count;
+                            }
+                            <div class="sidebar-item comments">
+                                <div class="sidebar-heading" id="count">
+                                    @if (comments.Count != 0)
+                                    {
+                                        <h2>
+                                            <span id="commentCount">@comments.Count</span> Yorum
+                                        </h2>
+                                    }
+                                    else
+                                    {
+                                        <h2>
+                                            İlk Yorumu Yap!
+                                        </h2>
+                                    }
+
+                                </div>
+                                <div class="content">
+                                    <ul id="allMessages">
+                                        @foreach (var comment in comments.Take(count))
+                                        {
+                                            <li class="d-block">
+                                                <div class="right-content" style="margin-left:0px;">
+                                                    <h4>@comment.Comment.User.FirstName @comment.Comment.User.LastName<br /><small>(@comment.CreatedDate)</small></h4>
+                                                    <p>@comment.Comment.Content</p>
+                                                </div>
+                                            </li>
+                                        }
+                                    </ul>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="sidebar-item submit-comment">
+                                <div class="sidebar-heading">
+                                    <h2>Yorumun</h2>
+                                </div>
+                                @if (Context.User.Identity.IsAuthenticated)
+                                {
+                                    <div class="content">
+                                        <form id="messageSection" method="post">
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <fieldset>
+                                                        <textarea rows="6" id="message" placeholder="Yorum..."></textarea>
+                                                    </fieldset>
+                                                </div>
+                                                <div class="col-lg-12">
+                                                    <fieldset>
+                                                        <button type="button" data-route="@Model.Id" class="main-button" id="btnSendComment">Yorum Yap</button>
+                                                    </fieldset>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-center">
+                                        <strong>Yorum yapmak için giriş yap</strong><br><br>
+                                        <a class="btn btn-primary" asp-controller="Auth" asp-action="Login">Giriş Yap</a>
+                                    </div>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="sidebar">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="sidebar-item search">
+                                <form id="search_form" asp-controller="Home" asp-action="Search" method="GET">
+                                    <input type="text" name="keyword" class="searchText" placeholder="Arama yapınız..." autocomplete="on">
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="sidebar-item recent-posts">
+                                <div class="sidebar-heading">
+                                    <h2>Son Makaleler</h2>
+                                </div>
+                                <div class="content">
+
+                                    @await Component.InvokeAsync("GetArticles")
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="sidebar-item categories">
+                                <div class="sidebar-heading">
+                                    <h2>Kategoriler</h2>
+                                </div>
+                                <div class="content">
+
+                                    @await Component.InvokeAsync("GetCategories")
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts{
+    <script>
+        $(document).ready(function () {
+            $("body").on("click", "#btnSendComment", () => {
+                var hasComment = $(".sidebar-heading h2 span").attr("id");
+                var articleId = $("#btnSendComment").attr("data-route");
+                var message = $("#message").val();
+                $.post("/Article/AddMessage",
+                    {
+                        message: message,
+                        articleId: articleId
+                    },
+                    function (comment, status) {
+                        if(status === "success"){
+                            $("#allMessages").prepend(`<li class="d-block">
+                                                                        <div class="right-content"  style="margin-left:0px;">
+                                                                    <h4>${comment.User.FirstName} <br /><small>${comment.CreatedDate}</small></h4>
+                                                                    <p>${comment.Content}</p>
+                                                                </div>
+                                                                </li>`);
+                            if (hasComment != undefined) {
+
+                                var countText = $("span#commentCount").text();
+                                var newCount = parseInt(countText) + 1;
+                                $("#commentCount").html(`${newCount}`);
+                                alert("Yorum başarıyla eklendi!");
+                            }
+                            else {
+                                $(".sidebar-heading#count").html(`<h2>
+                                                                    <span id="commentCount">1</span> Yorum
+                                                                </h2>`)
+                            }
+                        }
+                        else{
+                            alert('İşlem sırasında hata oluştu, Tekrar deneyiniz');
+                        }
+                       
+                    },
+                    "json");
+            });
+        });
+
+    </script>
+}

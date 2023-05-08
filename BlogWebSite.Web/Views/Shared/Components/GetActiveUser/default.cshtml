@@ -1,0 +1,24 @@
+﻿@model object
+@using BlogWebSite.Core.Const
+@if (User.IsInRole(RoleConst.SuperAdmin) || User.IsInRole(RoleConst.Admin))
+{
+    <li class="nav-item">
+        <a asp-area="Admin" asp-controller="Home" asp-action="Index" class="nav-link btn">
+            @Model.ToString()
+        </a>
+    </li>
+}
+else
+{
+    <li class="nav-item">
+        <a asp-controller="User" asp-action="Profile" class="nav-link btn">
+            @Model.ToString()
+        </a>
+    </li>
+}
+
+<li class="nav-item">
+    <a asp-controller="Auth" asp-action="Logout" class="nav-link btn">
+        Logout
+    </a>
+</li>
